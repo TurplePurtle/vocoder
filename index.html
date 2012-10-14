@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Vocoder? - Web Audio API</title>
+<style>
+body {
+  background-color: #333;
+  color: #eee;
+  font-family: Verdana, sans-serif;
+  font-size: 0.9em;
+}
+canvas {
+  background-color: #111;
+}
+</style>
+</head>
+
+<body>
+<h4>Frequency</h4>
+<canvas id="fft-graph"></canvas>
+
+<dl>
+  <dt>Oscillator Frequency: <span id="oscf-disp"></span></dt>
+  <dd><input id="oscf-slider" type="range"></dd>
+</dl>
+
+<script src="vocoder.js"></script>
+</body>
+</html>
