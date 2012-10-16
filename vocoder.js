@@ -23,7 +23,7 @@ function graphBuffer(ctx, buff) {
 		h = ctx.canvas.height;
 	ctx.clearRect(0, 0, ctx.canvas.width, h);
 	for (var i = 0; i < n; i++) {
-		ctx.fillRect(i, h - buff[i] - 1, 1, 1);
+		ctx.fillRect(i, h - buff[i] - 1, 1, buff[i]+1);
 	}
 }
 // create a slider
@@ -38,7 +38,7 @@ function setInputChangeFn(sel, fn, val) {
 var ctxfft = $("#fft-graph").getContext("2d"); // (not jQuery)
 ctxfft.canvas.width = 1024; // half the fftSize
 ctxfft.canvas.height = 256;
-ctxfft.fillStyle = "#eeeeee";
+ctxfft.fillStyle = "#9c3";
 
 /// Set up us the audio
 (function() {
@@ -50,6 +50,8 @@ ctxfft.fillStyle = "#eeeeee";
 		microphone -->- analyser (-->- modify gains[] params)
 
 		oscillator -->- filters[] -->- gains[] -->- output
+		
+		(note: filters are 2nd order)
 	*/
 
 	/// Graph nodes
@@ -58,7 +60,8 @@ ctxfft.fillStyle = "#eeeeee";
 	context    = new AudioContext,
 	analyser   = context.createAnalyser(),
 	gainNodes  = [],
-	filters    = [],
+	filters1   = [],
+	filters2   = [],
 	oscillator = context.createOscillator();
 
 
@@ -69,7 +72,7 @@ ctxfft.fillStyle = "#eeeeee";
 
 
 	/// Vocoder config
-	var numBands = 30;
+	var numBands = 40;
 
 	// freqBounds is an array of length (numBands + 1)
 	// It defines the bounds for each band.
@@ -85,7 +88,7 @@ ctxfft.fillStyle = "#eeeeee";
 		}
 		bounds.push(freqEnd);
 		return bounds;
-	})(300, 3400, numBands);
+	})(200, 4500, numBands);
 
 	// nBounds contains the bounds for each band as indices of the FFT
 	var nBounds = freqBounds.map(function(f) {
@@ -108,25 +111,31 @@ ctxfft.fillStyle = "#eeeeee";
 	}
 
 
-	/// Gain Nodes
+	/// Nodes for each band
 	for (var i = 0; i < numBands; i++) {
 		var gainNode = context.createGainNode();
+		var filter1 = context.createBiquadFilter();
+		var filter2 = context.createBiquadFilter();
+		var f0 = (freqBounds[i] + freqBounds[i+1]) / 2;
+		var bandwidth = 0.5 * (freqBounds[i+1] - freqBounds[i]);
+
+		/// Gain node
 		gainNode.gain.value = 0;
 		gainNode.connect(context.destination);
 		gainNodes.push(gainNode);
-	}
 
-	/// Filters
-	for (var i = 0; i < numBands; i++) {
-		var filter = context.createBiquadFilter();
-		var f0 = (freqBounds[i] + freqBounds[i+1]) / 2;
+		/// Second filter
+		filter2.frequency.value = f0;
+		filter2.Q.value = f0 / bandwidth;
+		filter2.connect(gainNode);
+		filters2.push(filter2);
 
-		filter.frequency.value = f0;
-		filter.Q.value = 5*f0 / (freqBounds[i+1] - freqBounds[i]);
-
-		oscillator.connect(filter);
-		filter.connect(gainNodes[i]);
-		filters.push(filter);
+		/// First filter
+		filter1.frequency.value = f0;
+		filter1.Q.value = f0 / bandwidth;
+		filter1.connect(filter2);
+		oscillator.connect(filter1);
+		filters1.push(filter1);
 	}
 
 	/// Oscillator config
@@ -157,7 +166,7 @@ ctxfft.fillStyle = "#eeeeee";
 		for (var i = 0; i < numBands; i++) {
 			gainNodes[i].gain.value = gains[i];
 		}
-	}, 10);
+	}, 15);
 
 
 	/// Set up slider to change oscillator frequency
