@@ -1,3 +1,5 @@
-Simple vocoder using the WebAudio API.
+**Update:** This code hasn't been updated since the WebAudio API nodes were changed. However, you can see an updated working demo at [http://www.turplepurtle.com/vocoder/](http://www.turplepurtle.com/vocoder/).
 
-Demo at http://jsfiddle.net/TXDha/ [Requires Chrome Canary]
+
+
+Simple vocoder using the WebAudio API.
